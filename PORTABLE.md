@@ -1,6 +1,6 @@
 # Bambu Studio Portable
 
-This fork provides an unofficial **portable** edition of [Bambu Studio](https://github.com/bambulab/BambuStudio). Builds use the same dependencies, assets, translations, and packaging layout as upstream, with portable-specific changes isolated on the `portable` branch.
+This fork provides an unofficial **portable** edition of [Bambu Studio](https://github.com/bambulab/BambuStudio). Builds use the same dependencies, assets, translations, and packaging layout as upstream, with portable-specific changes on the `main` branch.
 
 ## What is different?
 
@@ -85,12 +85,9 @@ Portable mode works with OneDrive, Nextcloud, Google Drive, Dropbox, and similar
 
 The `cache` and `log` folders change frequently. Excluding logs from sync is usually safe. Excluding `cache\WebView2Cache` may require signing in again on each PC.
 
-## Branch layout
+## Repository layout
 
-| Branch | Purpose |
-|--------|---------|
-| `master` | Tracks upstream Bambu Studio without portable changes |
-| `portable` | Upstream plus portable build flag, runtime behavior, CI, and docs |
+This fork uses a single **`main`** branch. It contains upstream Bambu Studio plus the portable changes. Updates from BambuLab are merged into `main` automatically.
 
 ## Build locally
 

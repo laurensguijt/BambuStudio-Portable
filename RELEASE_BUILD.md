@@ -6,7 +6,7 @@ This document describes how automated portable releases are built and published 
 
 | Workflow | Purpose |
 |----------|---------|
-| [`sync_upstream.yml`](.github/workflows/sync_upstream.yml) | Merge upstream into `portable` and trigger builds for new upstream releases |
+| [`sync_upstream.yml`](.github/workflows/sync_upstream.yml) | Merge upstream into `main` and trigger builds for new upstream releases |
 | [`build_portable.yml`](.github/workflows/build_portable.yml) | Build and publish a portable GitHub release |
 | [`build_all.yml`](.github/workflows/build_all.yml) | Upstream-style CI matrix (deps cache + app build) |
 
@@ -58,7 +58,7 @@ Portable artifacts use `_Portable` in the filename:
 | macOS | `BambuStudio_Portable_Mac_x86_64_V02.07.00.55.zip` |
 | Linux | `BambuStudio_Portable_ubuntu-22.04_V02.07.00.55.AppImage` |
 
-The version segment comes from `version.inc` in the synced `portable` branch.
+The version segment comes from `version.inc` in the synced `main` branch.
 
 ## Release notes
 
@@ -73,7 +73,7 @@ When available, the original upstream release notes for the matching tag are app
 ## Manual release
 
 1. Open **Actions → Build Portable Release → Run workflow**.
-2. Select branch `portable`.
+2. Leave branch on `main` (default).
 3. Set `upstream_tag` to the upstream release tag (for example `v1.3.1.1`).
 4. Set `portable_revision` if you need a rebuild (`1`, `2`, ...).
 
