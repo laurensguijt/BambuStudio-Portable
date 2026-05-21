@@ -1,10 +1,18 @@
-# Portable Bambu Studio
+# Bambu Studio Portable
 
-This fork always runs in portable mode on Windows. User data is stored next to the executable instead of in the Windows user profile, so the folder can be moved or cloud-synced without sharing settings with a normal installed Bambu Studio.
+This fork provides an unofficial **portable** edition of [Bambu Studio](https://github.com/bambulab/BambuStudio). Builds use the same dependencies, assets, translations, and packaging layout as upstream, with portable-specific changes isolated on the `portable` branch.
 
-## Data Location
+## What is different?
 
-On startup, Bambu Studio resolves the executable directory and uses `portable_data` beside it:
+- The application title and About dialog show **Bambu Studio Portable**.
+- User settings, profiles, cache, plugins, and logs are stored in a `portable_data` folder next to the application.
+- Portable builds do not use the normal per-user install data folders, so they can run alongside an installed copy of Bambu Studio.
+
+## Data location
+
+On startup, the app resolves the application directory and stores data in `portable_data`:
+
+### Windows
 
 ```text
 BambuStudioPortable/
@@ -25,39 +33,78 @@ BambuStudioPortable/
     `-- ota/
 ```
 
-Most folders are created on demand. Existing Bambu Studio code still uses the normal `Slic3r::data_dir()` layout; this fork only changes that root directory to `portable_data`.
+### Linux (AppImage or tarball layout)
 
-## Migrate Existing Settings
+```text
+BambuStudio/
+|-- BambuStudio_ubu64.AppImage   (or bin/bambu-studio)
+|-- resources/
+`-- portable_data/
+    `-- ...
+```
+
+For AppImage builds, `portable_data` is created next to the AppImage file.
+
+### macOS
+
+```text
+ReleaseFolder/
+|-- BambuStudio.app
+`-- portable_data/
+    `-- ...
+```
+
+## Migrate existing settings
 
 Close Bambu Studio before copying files.
 
-1. Start this portable fork once, then close it. This creates `portable_data`.
-2. Copy the contents of the normal data folder into `portable_data`.
+1. Start the portable build once, then close it to create `portable_data`.
+2. Copy the contents of your normal Bambu Studio data folder into `portable_data`.
 
-For a normal public Windows build, the source folder is usually:
+Windows source folder:
 
 ```text
 %APPDATA%\BambuStudio
 ```
 
-Copy items such as `BambuStudio.conf`, `user`, `system`, `vendor`, `plugins`, `ota`, `filament_inventory`, `hms`, `cameratools`, and any other folders you want to carry over.
-
-Login/session data used by WebView2 is stored separately in normal installs:
+Optional WebView2 login cache from:
 
 ```text
 %LOCALAPPDATA%\BambuStudio\WebView2Cache
 ```
 
-To migrate browser login state, copy that folder into:
+Copy that into:
 
 ```text
 portable_data\cache\WebView2Cache
 ```
 
-## Cloud Sync Notes
+## Cloud sync notes
 
-Portable mode is suitable for OneDrive, Nextcloud, Google Drive, Dropbox, and similar folders, but avoid running the same portable folder on two PCs at the same time. Let sync finish before opening Bambu Studio on another PC.
+Portable mode works with OneDrive, Nextcloud, Google Drive, Dropbox, and similar services. Avoid running the same portable folder on two PCs at the same time. Let sync finish before opening Bambu Studio on another machine.
 
-The `cache` and `log` folders can change often. Excluding logs from sync is usually safe. Excluding `cache\WebView2Cache` may require signing in again on each PC.
+The `cache` and `log` folders change frequently. Excluding logs from sync is usually safe. Excluding `cache\WebView2Cache` may require signing in again on each PC.
 
-Some settings may still refer to external model files, removable drives, device names, or other machine-specific choices. Those paths are user choices and may not exist on another PC.
+## Branch layout
+
+| Branch | Purpose |
+|--------|---------|
+| `master` | Tracks upstream Bambu Studio without portable changes |
+| `portable` | Upstream plus portable build flag, runtime behavior, CI, and docs |
+
+## Build locally
+
+Enable portable mode with CMake:
+
+```bash
+cmake -S . -B build -DSLIC3R_PORTABLE=1 ...
+```
+
+On Windows, after building, run the executable from its output folder. The first launch creates `portable_data` beside the binary.
+
+See [RELEASE_BUILD.md](RELEASE_BUILD.md) for CI and release details.
+
+## Related docs
+
+- [UPSTREAM_SYNC.md](UPSTREAM_SYNC.md) — how upstream changes are merged
+- [RELEASE_BUILD.md](RELEASE_BUILD.md) — automated portable releases

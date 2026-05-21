@@ -204,13 +204,11 @@ if (WIN32)
             )
         endforeach ()
 
-        if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-            bambustudio_copy_dlls(BambuStudioDllsCopy "Debug" "d" output_dlls_Debug)
-        elseif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
-            bambustudio_copy_dlls(BambuStudioDllsCopy "RelWithDebInfo" "" output_dlls_RelWithDebInfo)
-        else()
-            bambustudio_copy_dlls(BambuStudioDllsCopy "Release" "" output_dlls_Release)
-        endif()
+        # Multi-config generators leave CMAKE_BUILD_TYPE empty at configure time.
+        # Copy runtime DLLs for each MSVC configuration we build.
+        bambustudio_copy_dlls(BambuStudioDllsCopy "Debug" "d" output_dlls_Debug)
+        bambustudio_copy_dlls(BambuStudioDllsCopy "RelWithDebInfo" "" output_dlls_RelWithDebInfo)
+        bambustudio_copy_dlls(BambuStudioDllsCopy "Release" "" output_dlls_Release)
     else ()
         file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/resources" WIN_RESOURCES_SYMLINK)
         add_custom_command(TARGET BambuStudio POST_BUILD

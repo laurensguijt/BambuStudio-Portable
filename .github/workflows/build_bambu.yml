@@ -13,6 +13,10 @@ on:
       arch:
         required: false
         type: string
+      portable:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build_bambu:
@@ -22,6 +26,8 @@ jobs:
       date:
       ver:
       ver_pure:
+      portable_suffix: ${{ inputs.portable && '_Portable' || '' }}
+      EXTRA_CMAKE_ARGS: ${{ inputs.portable && '-DSLIC3R_PORTABLE=1' || '' }}
 
     steps:
       - name: Checkout
@@ -103,14 +109,14 @@ jobs:
       - name: pack mac app
         if: github.ref != 'refs/heads/main' && (inputs.os == 'macos-15-intel' || inputs.os == 'macos-15')
         working-directory: ${{ github.workspace }}
-        run: zip -r BambuStudio_Mac_${{inputs.arch}}_${{ env.ver }}.zip ${{ github.workspace }}/build
+        run: zip -r BambuStudio${{ env.portable_suffix }}_Mac_${{inputs.arch}}_${{ env.ver }}.zip ${{ github.workspace }}/build
 
       - name: Upload artifacts mac
         if: inputs.os == 'macos-15-intel' || inputs.os == 'macos-15'
         uses: actions/upload-artifact@v6
         with:
-          name: BambuStudio_Mac_${{inputs.arch}}_${{ env.ver }}
-          path: ${{ github.workspace }}/BambuStudio_Mac_${{inputs.arch}}_${{ env.ver }}.zip
+          name: BambuStudio${{ env.portable_suffix }}_Mac_${{inputs.arch}}_${{ env.ver }}
+          path: ${{ github.workspace }}/BambuStudio${{ env.portable_suffix }}_Mac_${{inputs.arch}}_${{ env.ver }}.zip
 
   # Windows
       - name: setup MSVC
@@ -130,7 +136,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -G "Visual Studio 17 2022" -A X64 -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 -DCMAKE_PREFIX_PATH="${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local" -DCMAKE_INSTALL_PREFIX="../install-dir" -DCMAKE_BUILD_TYPE=Release -DWIN10SDK_PATH="C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0"
+          cmake .. -G "Visual Studio 17 2022" -A X64 -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 -DCMAKE_PREFIX_PATH="${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local" -DCMAKE_INSTALL_PREFIX="../install-dir" -DCMAKE_BUILD_TYPE=Release -DWIN10SDK_PATH="C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0" ${{ inputs.portable && '-DSLIC3R_PORTABLE=1' || '' }}
           cmake --build . --target install --config Release -- -m
 
       # - name: Create installer Win
@@ -143,7 +149,7 @@ jobs:
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}
         shell: cmd
-        run: '"C:/Program Files/7-Zip/7z.exe" a -tzip BambuStudio_Windows_${{ env.ver }}_portable.zip ${{ github.workspace }}/install-dir'
+        run: '"C:/Program Files/7-Zip/7z.exe" a -tzip BambuStudio${{ env.portable_suffix }}_Windows_${{ env.ver }}_portable.zip ${{ github.workspace }}/install-dir'
 
       # - name: Pack PDB
       #   if: inputs.os == 'windows-latest'
@@ -155,8 +161,8 @@ jobs:
         if: inputs.os == 'windows-latest'
         uses: actions/upload-artifact@v6
         with:
-          name: BambuStudio_Windows_${{ env.ver }}_portable
-          path: ${{ github.workspace }}/BambuStudio_Windows_${{ env.ver }}_portable.zip
+          name: BambuStudio${{ env.portable_suffix }}_Windows_${{ env.ver }}_portable
+          path: ${{ github.workspace }}/BambuStudio${{ env.portable_suffix }}_Windows_${{ env.ver }}_portable.zip
 
 
   # Ubuntu
@@ -175,7 +181,7 @@ jobs:
         shell: bash
         run: |
           ./BuildLinux.sh -isfr
-          mv -n ./build/BambuStudio_ubu64.AppImage ./build/Bambu_Studio_${{inputs.os}}_${{ env.ver }}.AppImage
+          mv -n ./build/BambuStudio_ubu64.AppImage ./build/BambuStudio${{ env.portable_suffix }}_${{inputs.os}}_${{ env.ver }}.AppImage
 
       # - name: Build orca_custom_preset_tests
       #   if: github.ref == 'refs/heads/main' && inputs.os == 'ubuntu-22.04'
@@ -190,8 +196,8 @@ jobs:
         if: ${{ ! env.ACT && (inputs.os == 'ubuntu-22.04' || inputs.os == 'ubuntu-24.04') }}
         uses: actions/upload-artifact@v6
         with:
-          name: BambuStudio_${{inputs.os}}_${{ env.ver }}
-          path: './build/Bambu_Studio_${{inputs.os}}_${{ env.ver }}.AppImage'
+          name: BambuStudio${{ env.portable_suffix }}_${{inputs.os}}_${{ env.ver }}
+          path: './build/BambuStudio${{ env.portable_suffix }}_${{inputs.os}}_${{ env.ver }}.AppImage'
 
       # - name: Deploy Ubuntu release
       #   if: ${{ ! env.ACT && github.ref == 'refs/heads/main' && inputs.os == 'ubuntu-22.04' }}

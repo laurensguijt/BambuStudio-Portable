@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.13)
 
-# The CMake version on Windows must not be greater than 4.0.
-if ( ((MSVC) OR (WIN32)) AND (${CMAKE_VERSION} VERSION_GREATER_EQUAL "4.0") )
-    message(FATAL_ERROR "Only cmake versions between 3.13.x and 4.0.x is supported on windows. Detected version: ${CMAKE_VERSION}")
+# The CMake version on Windows must not be greater than 4.4.
+if ( ((MSVC) OR (WIN32)) AND (${CMAKE_VERSION} VERSION_GREATER_EQUAL "4.4") )
+    message(FATAL_ERROR "Only cmake versions between 3.13.x and 4.4.x is supported on windows. Detected version: ${CMAKE_VERSION}")
 endif()
 
 project(BambuStudio)
@@ -39,8 +39,15 @@ option(SLIC3R_MSVC_COMPILE_PARALLEL "Compile on Visual Studio in parallel" 1)
 option(SLIC3R_MSVC_PDB          "Generate PDB files on MSVC in Release mode" 1)
 option(SLIC3R_PERL_XS           "Compile XS Perl module and enable Perl unit and integration tests" 0)
 option(SLIC3R_ASAN              "Enable ASan on Clang and GCC" 0)
+option(SLIC3R_PORTABLE          "Build portable edition with local portable_data folder" OFF)
 # If SLIC3R_FHS is 1 -> SLIC3R_DESKTOP_INTEGRATION is always 0, othrewise variable.
 CMAKE_DEPENDENT_OPTION(SLIC3R_DESKTOP_INTEGRATION "Allow performing desktop integration during runtime" 1 "NOT SLIC3R_FHS" 0)
+
+if (SLIC3R_PORTABLE)
+    set(SLIC3R_APP_NAME "Bambu Studio Portable" CACHE STRING "" FORCE)
+    add_compile_definitions(SLIC3R_PORTABLE_BUILD)
+    message(STATUS "Building Bambu Studio Portable edition")
+endif ()
 
 set(OPENVDB_FIND_MODULE_PATH "" CACHE PATH "Path to OpenVDB installation's find modules.")
 
@@ -439,6 +446,7 @@ if(SLIC3R_STATIC)
 endif()
 set(TBB_DEBUG 1)
 find_package(TBB REQUIRED)
+slic3r_remap_configs("TBB::tbb;TBB::tbbmalloc" RelWithDebInfo Release)
 # include_directories(${TBB_INCLUDE_DIRS})
 # add_definitions(${TBB_DEFINITIONS})
 # if(MSVC)

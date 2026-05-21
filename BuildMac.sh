@@ -155,6 +155,10 @@ function build_slicer() {
             mkdir -p "$PROJECT_BUILD_DIR"
             cd "$PROJECT_BUILD_DIR"
             if [ "1." != "$BUILD_ONLY". ]; then
+                _PORTABLE_CMAKE_ARGS=""
+                if [ -n "${EXTRA_CMAKE_ARGS}" ]; then
+                    _PORTABLE_CMAKE_ARGS="${EXTRA_CMAKE_ARGS}"
+                fi
                 cmake "${PROJECT_DIR}" \
                     -G "${SLICER_CMAKE_GENERATOR}" \
                     -DBBL_RELEASE_TO_PUBLIC=1 \
@@ -166,7 +170,8 @@ function build_slicer() {
                     -DCMAKE_INSTALL_RPATH="${DEPS}/usr/local" \
                     -DCMAKE_MACOSX_BUNDLE=ON \
                     -DCMAKE_OSX_ARCHITECTURES="${_ARCH}" \
-                    -DCMAKE_OSX_DEPLOYMENT_TARGET="${OSX_DEPLOYMENT_TARGET}"
+                    -DCMAKE_OSX_DEPLOYMENT_TARGET="${OSX_DEPLOYMENT_TARGET}" \
+                    ${_PORTABLE_CMAKE_ARGS}
             fi
             cmake --build . --config "$BUILD_CONFIG" --target "$SLICER_BUILD_TARGET"
         )

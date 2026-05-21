@@ -515,8 +515,19 @@ set(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE ON CACHE BOOL "" FORCE)
 cmake_policy(PUSH)
 cmake_policy(SET CMP0011 NEW)
 find_package(CGAL REQUIRED)
+# OpenCV deps install a staticlib config; the root OpenCVConfig.cmake does not
+# recognize MSVC 19.50+ (Visual Studio 18/2026) and leaves OpenCV_FOUND=FALSE.
+if (WIN32)
+    foreach (_prefix IN LISTS CMAKE_PREFIX_PATH)
+        if (EXISTS "${_prefix}/staticlib/OpenCVConfig.cmake")
+            set(OpenCV_DIR "${_prefix}/staticlib" CACHE PATH "OpenCV cmake package directory" FORCE)
+            break()
+        endif ()
+    endforeach ()
+endif ()
 find_package(OpenCV REQUIRED core)
 find_package(assimp REQUIRED)
+slic3r_remap_configs("assimp::assimp" RelWithDebInfo Release)
 cmake_policy(POP)
 
 add_library(libslic3r_cgal STATIC

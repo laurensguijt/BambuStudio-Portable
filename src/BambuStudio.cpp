@@ -1525,7 +1525,7 @@ int CLI::run(int argc, char **argv)
         return CLI_INVALID_PARAMS;
     }
     BOOST_LOG_TRIVIAL(info) << "finished setup params, argc="<< argc << std::endl;
-#ifdef _WIN32
+#ifdef SLIC3R_PORTABLE_BUILD
     boost::filesystem::path temp_path = boost::filesystem::path(data_dir()) / "cache" / "temp";
     boost::system::error_code ec;
     boost::filesystem::create_directories(temp_path, ec);
@@ -8155,10 +8155,27 @@ bool CLI::setup(int argc, char **argv)
     set_local_dir((path_resources / "i18n").string());
     set_sys_shapes_dir((path_resources / "shapes").string());
 
-#ifdef _WIN32
-    boost::filesystem::path executable_dir = boost::filesystem::absolute(path_to_binary.parent_path());
-    executable_dir.make_preferred();
-    boost::filesystem::path portable_data = executable_dir / "portable_data";
+#ifdef SLIC3R_PORTABLE_BUILD
+    boost::filesystem::path portable_root;
+#if defined(_WIN32)
+    portable_root = boost::filesystem::absolute(path_to_binary.parent_path());
+#elif defined(__APPLE__)
+    boost::filesystem::path binary_dir = boost::filesystem::absolute(path_to_binary.parent_path());
+    if (binary_dir.filename() == "MacOS")
+        portable_root = binary_dir.parent_path().parent_path().parent_path();
+    else
+        portable_root = binary_dir;
+#elif defined(__linux__)
+    const char *appimage = boost::nowide::getenv("APPIMAGE");
+    if (appimage != nullptr && appimage[0] != '\0')
+        portable_root = boost::filesystem::path(appimage).parent_path();
+    else
+        portable_root = boost::filesystem::canonical(path_to_binary).parent_path().parent_path();
+#else
+    portable_root = boost::filesystem::absolute(path_to_binary.parent_path());
+#endif
+    portable_root.make_preferred();
+    boost::filesystem::path portable_data = portable_root / "portable_data";
     portable_data.make_preferred();
     set_data_dir(portable_data.string());
 #endif

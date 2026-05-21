@@ -1,0 +1,120 @@
+name: Build Portable Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_tag:
+        description: 'Upstream release tag (for example v1.3.1.1)'
+        required: true
+        type: string
+      portable_revision:
+        description: 'Portable revision suffix (for example 1 -> vX.Y.Z-portable.1)'
+        required: false
+        default: '1'
+        type: string
+  workflow_call:
+    inputs:
+      upstream_tag:
+        required: true
+        type: string
+      portable_revision:
+        required: false
+        type: string
+        default: '1'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-portable-${{ inputs.upstream_tag }}-${{ inputs.portable_revision || '1' }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Prepare release metadata
+    runs-on: ubuntu-latest
+    outputs:
+      portable_tag: ${{ steps.meta.outputs.portable_tag }}
+      release_title: ${{ steps.meta.outputs.release_title }}
+      version_display: ${{ steps.meta.outputs.version_display }}
+    steps:
+      - name: Compute portable tag and title
+        id: meta
+        run: |
+          UPSTREAM_TAG="${{ inputs.upstream_tag }}"
+          REV="${{ inputs.portable_revision || '1' }}"
+          PORTABLE_TAG="${UPSTREAM_TAG}-portable.${REV}"
+          VERSION="${UPSTREAM_TAG#v}"
+          echo "portable_tag=${PORTABLE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "release_title=Bambu Studio Portable ${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "version_display=${VERSION}" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.os }}
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+          - os: ubuntu-24.04
+          - os: windows-latest
+          - os: macos-15-intel
+            arch: x86_64
+          - os: macos-15
+            arch: arm64
+    uses: ./.github/workflows/build_check_cache.yml
+    with:
+      os: ${{ matrix.os }}
+      arch: ${{ matrix.arch }}
+      build-deps-only: false
+      portable: true
+    secrets: inherit
+
+  release:
+    name: Publish portable release
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Compose release notes
+        id: notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTICE="This is an unofficial portable build of Bambu Studio. User data is stored in the portable_data folder next to the application."
+          UPSTREAM_BODY=""
+          if gh release view "${{ inputs.upstream_tag }}" --repo bambulab/BambuStudio --json body -q .body >/dev/null 2>&1; then
+            UPSTREAM_BODY=$(gh release view "${{ inputs.upstream_tag }}" --repo bambulab/BambuStudio --json body -q .body)
+          fi
+          {
+            echo "body<<EOF"
+            echo "${NOTICE}"
+            echo ""
+            echo "---"
+            echo ""
+            echo "${UPSTREAM_BODY}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Collect release assets
+        run: |
+          mkdir -p release-assets
+          find artifacts -type f \( -name '*.zip' -o -name '*.AppImage' -o -name '*.7z' \) -exec cp -t release-assets {} +
+          ls -la release-assets
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.portable_tag }}
+          name: ${{ needs.prepare.outputs.release_title }}
+          body: ${{ steps.notes.outputs.body }}
+          files: release-assets/*
+          draft: false
+          prerelease: false
+          generate_release_notes: false

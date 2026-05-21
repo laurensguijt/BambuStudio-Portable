@@ -1,0 +1,135 @@
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Merge upstream into portable
+    runs-on: ubuntu-latest
+    outputs:
+      upstream_tag: ${{ steps.upstream.outputs.tag }}
+      build_needed: ${{ steps.release_check.outputs.build_needed }}
+      portable_revision: ${{ steps.release_check.outputs.portable_revision }}
+    steps:
+      - name: Checkout portable branch
+        uses: actions/checkout@v6
+        with:
+          ref: portable
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/bambulab/BambuStudio.git || true
+          git fetch upstream master --tags
+
+      - name: Resolve latest upstream release tag
+        id: upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=""
+          if gh release view --repo bambulab/BambuStudio --json tagName -q .tagName >/dev/null 2>&1; then
+            TAG=$(gh release view --repo bambulab/BambuStudio --json tagName -q .tagName)
+          fi
+          if [ -z "$TAG" ]; then
+            TAG=$(git tag -l 'v*' --sort=-v:refname | grep -Ev 'portable|alpha|beta|rc' | head -1)
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Merge upstream/master
+        id: merge
+        run: |
+          set -e
+          if git merge upstream/master --no-edit; then
+            echo "conflict=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "conflict=true" >> "$GITHUB_OUTPUT"
+            git merge --abort || true
+            exit 1
+          fi
+
+      - name: Push portable branch
+        if: success()
+        run: git push origin portable
+
+      - name: Check whether a portable release is needed
+        id: release_check
+        if: success()
+        run: |
+          git fetch origin --tags
+          UPSTREAM_TAG="${{ steps.upstream.outputs.tag }}"
+          PORTABLE_TAG="${UPSTREAM_TAG}-portable.1"
+          if [ -z "$UPSTREAM_TAG" ]; then
+            echo "build_needed=false" >> "$GITHUB_OUTPUT"
+            echo "portable_revision=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git rev-parse "$PORTABLE_TAG" >/dev/null 2>&1; then
+            echo "build_needed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "build_needed=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "portable_revision=1" >> "$GITHUB_OUTPUT"
+
+      - name: Open issue for merge conflict
+        if: failure() && steps.merge.outputs.conflict == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Upstream sync conflict (${new Date().toISOString().slice(0, 10)})`;
+            const body = [
+              'Automatic merge of `upstream/master` into `portable` failed.',
+              '',
+              'Please resolve the conflict locally:',
+              '',
+              '```bash',
+              'git checkout portable',
+              'git fetch upstream',
+              'git merge upstream/master',
+              '# resolve conflicts',
+              'git push origin portable',
+              '```',
+              '',
+              `Workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            ].join('\n');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body
+            });
+
+  build_portable:
+    name: Trigger portable release build
+    needs: sync
+    if: needs.sync.outputs.build_needed == 'true' && needs.sync.outputs.upstream_tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch portable release workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'build_portable.yml',
+              ref: 'portable',
+              inputs: {
+                upstream_tag: '${{ needs.sync.outputs.upstream_tag }}',
+                portable_revision: '${{ needs.sync.outputs.portable_revision }}'
+              }
+            });

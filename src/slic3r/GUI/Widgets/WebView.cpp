@@ -245,7 +245,11 @@ wxString WebView::BuildEdgeUserDataPath()
     static wxString data_dir;
     if (!data_dir.empty()) { return data_dir; }
 
-    boost::filesystem::path cache_root = boost::filesystem::path(Slic3r::data_dir()) / "cache";
+    boost::filesystem::path cache_root;
+    if (!Slic3r::data_dir().empty())
+        cache_root = boost::filesystem::path(Slic3r::data_dir()) / "cache";
+    else
+        cache_root = boost::filesystem::path(wxStandardPaths::Get().GetUserLocalDataDir().utf8_str().data());
     cache_root.make_preferred();
     data_dir = wxString::FromUTF8(cache_root.string().c_str());
     data_dir.append("\\WebView2Cache\\");
