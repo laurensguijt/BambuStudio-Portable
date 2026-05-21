@@ -74,7 +74,6 @@ using namespace nlohmann;
 
 #include "BambuStudio.hpp"
 //BBS: add exception handler for win32
-#include <wx/stdpaths.h>
 #ifdef WIN32
 //#include "BaseException.h"
 #endif
@@ -1526,8 +1525,14 @@ int CLI::run(int argc, char **argv)
         return CLI_INVALID_PARAMS;
     }
     BOOST_LOG_TRIVIAL(info) << "finished setup params, argc="<< argc << std::endl;
-    std::string temp_path = wxFileName::GetTempDir().utf8_str().data();
-    set_temporary_dir(temp_path);
+#ifdef _WIN32
+    boost::filesystem::path temp_path = boost::filesystem::path(data_dir()) / "cache" / "temp";
+    boost::system::error_code ec;
+    boost::filesystem::create_directories(temp_path, ec);
+    set_temporary_dir(temp_path.make_preferred().string());
+#else
+    set_temporary_dir(boost::filesystem::temp_directory_path().string());
+#endif
 
     m_extra_config.apply(m_config, true);
     m_extra_config.normalize_fdm();
@@ -8149,6 +8154,14 @@ bool CLI::setup(int argc, char **argv)
     set_var_dir((path_resources / "images").string());
     set_local_dir((path_resources / "i18n").string());
     set_sys_shapes_dir((path_resources / "shapes").string());
+
+#ifdef _WIN32
+    boost::filesystem::path executable_dir = boost::filesystem::absolute(path_to_binary.parent_path());
+    executable_dir.make_preferred();
+    boost::filesystem::path portable_data = executable_dir / "portable_data";
+    portable_data.make_preferred();
+    set_data_dir(portable_data.string());
+#endif
 
     // Parse all command line options into a DynamicConfig.
     // If any option is unsupported, print usage and abort immediately.

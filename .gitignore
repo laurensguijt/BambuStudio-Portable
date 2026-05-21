@@ -18,6 +18,8 @@ xs/assertlib*
 local-lib
 /src/TAGS
 /.vscode/
+*.code-workspace
+.cursor/
 build-linux/*
 deps/build-linux/*
 **/.DS_Store

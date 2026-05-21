@@ -1,6 +1,7 @@
 #include "WebView.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/Utils/MacDarkMode.hpp"
+#include "libslic3r/Utils.hpp"
 
 #include <boost/log/trivial.hpp>
 
@@ -244,7 +245,9 @@ wxString WebView::BuildEdgeUserDataPath()
     static wxString data_dir;
     if (!data_dir.empty()) { return data_dir; }
 
-    data_dir = wxStandardPaths::Get().GetUserLocalDataDir();
+    boost::filesystem::path cache_root = boost::filesystem::path(Slic3r::data_dir()) / "cache";
+    cache_root.make_preferred();
+    data_dir = wxString::FromUTF8(cache_root.string().c_str());
     data_dir.append("\\WebView2Cache\\");
 
     // find a path
