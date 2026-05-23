@@ -80,7 +80,7 @@ jobs:
         shell: pwsh
           
       - name: Fix python install error on mac
-        if: inputs.os == 'macos-15-intel'
+        if: startsWith(inputs.os, 'macos-') && inputs.arch == 'x86_64'
         working-directory: ${{ github.workspace }}
         run: |
           find /usr/local/bin -lname '*/Library/Frameworks/Python.framework/*' -delete
@@ -88,7 +88,7 @@ jobs:
           brew install --force python3 && brew unlink python3 && brew unlink python3 && brew link --overwrite python3
       
       - name: Free disk space
-        if: inputs.os == 'macos-15'
+        if: startsWith(inputs.os, 'macos-') && inputs.arch == 'arm64'
         run: |
           df -h
           sudo find /Applications -maxdepth 1 -type d -name "Xcode_*.app" ! -name "Xcode_15.4.app" -exec rm -rf {} +
@@ -96,7 +96,7 @@ jobs:
           df -h
 
       - name: Build on Mac ${{ inputs.arch }}
-        if: inputs.os == 'macos-15-intel'
+        if: startsWith(inputs.os, 'macos-') && inputs.arch == 'x86_64'
         working-directory: ${{ github.workspace }}
         run: |
             brew install automake texinfo nasm yasm x264
@@ -115,7 +115,7 @@ jobs:
             brew install zstd
       
       - name: Build on Mac ${{ inputs.arch }}
-        if: inputs.os == 'macos-15'
+        if: startsWith(inputs.os, 'macos-') && inputs.arch == 'arm64'
         working-directory: ${{ github.workspace }}
         run: |
             brew install automake texinfo nasm yasm x264
@@ -134,7 +134,7 @@ jobs:
             brew install zstd
 
       - name: pack deps on Macos
-        if: inputs.os == 'macos-15-intel' || inputs.os == 'macos-15'
+        if: startsWith(inputs.os, 'macos-')
         working-directory: ${{ github.workspace }}
         run: |
           cd ${{ github.workspace }}/deps
@@ -153,14 +153,14 @@ jobs:
 
       # Upload Artifacts
       - name: Upload Mac ${{ inputs.arch }} artifacts
-        if: inputs.os == 'macos-15-intel' || inputs.os == 'macos-15'
+        if: startsWith(inputs.os, 'macos-')
         uses: actions/upload-artifact@v6
         with:
           name: BambuStudio_dep_mac_${{ inputs.arch }}_${{ env.date }}
           path: ${{ github.workspace }}/deps/BambuStudio_dep_mac_${{ inputs.arch }}*.tar.gz
 
       - name: clean artifacts
-        if: inputs.os == 'macos-15-intel' || inputs.os == 'macos-15'
+        if: startsWith(inputs.os, 'macos-')
         working-directory: ${{ github.workspace }}
         run: rm -rf ${{ github.workspace }}/deps/build/BambuStudio_dep_mac_${{ inputs.arch }}*.tar.gz
 

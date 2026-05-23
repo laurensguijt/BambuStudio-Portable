@@ -81,7 +81,7 @@ jobs:
 
   #   Mac
       - name: Build slicer mac
-        if: inputs.os == 'macos-15-intel'
+        if: startsWith(inputs.os, 'macos-') && inputs.arch == 'x86_64'
         working-directory: ${{ github.workspace }}
         run: |
           brew install automake texinfo
@@ -94,7 +94,7 @@ jobs:
           ./BuildMac.sh -s -x -a x86_64 -t 10.15 -1
 
       - name: Build slicer mac
-        if: inputs.os == 'macos-15'
+        if: startsWith(inputs.os, 'macos-') && inputs.arch == 'arm64'
         working-directory: ${{ github.workspace }}
         run: |
           brew install automake texinfo
@@ -107,12 +107,12 @@ jobs:
           ./BuildMac.sh -s -x -a universal -t 10.15 -1
 
       - name: pack mac app
-        if: github.ref != 'refs/heads/main' && (inputs.os == 'macos-15-intel' || inputs.os == 'macos-15')
+        if: startsWith(inputs.os, 'macos-')
         working-directory: ${{ github.workspace }}
         run: zip -r BambuStudio${{ env.portable_suffix }}_Mac_${{inputs.arch}}_${{ env.ver }}.zip ${{ github.workspace }}/build
 
       - name: Upload artifacts mac
-        if: inputs.os == 'macos-15-intel' || inputs.os == 'macos-15'
+        if: startsWith(inputs.os, 'macos-')
         uses: actions/upload-artifact@v6
         with:
           name: BambuStudio${{ env.portable_suffix }}_Mac_${{inputs.arch}}_${{ env.ver }}
