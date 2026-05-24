@@ -21,8 +21,7 @@ Same OS and architecture matrix as upstream where possible:
 | `ubuntu-22.04` | AppImage |
 | `ubuntu-24.04` | AppImage |
 | `windows-latest` | ZIP portable folder |
-| `macos-15-intel` | ZIP (x86_64) |
-| `macos-15` | ZIP (Apple Silicon / universal build output) |
+| `macos-14` | ZIP (universal macOS build output) |
 
 ## Portable build flag
 
@@ -55,7 +54,7 @@ Portable artifacts use `_Portable` in the filename:
 | Platform | Example |
 |----------|---------|
 | Windows | `BambuStudio_Portable_Windows_V02.07.00.55_portable.zip` |
-| macOS | `BambuStudio_Portable_Mac_x86_64_V02.07.00.55.zip` |
+| macOS | `BambuStudio_Portable_Mac_universal_V02.07.00.55.zip` |
 | Linux | `BambuStudio_Portable_ubuntu-22.04_V02.07.00.55.AppImage` |
 
 The version segment comes from `version.inc` in the synced `main` branch.

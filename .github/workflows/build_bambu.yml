@@ -94,7 +94,7 @@ jobs:
           ./BuildMac.sh -s -x -a x86_64 -t 10.15 -1
 
       - name: Build slicer mac
-        if: startsWith(inputs.os, 'macos-') && inputs.arch == 'arm64'
+        if: startsWith(inputs.os, 'macos-') && (inputs.arch == 'arm64' || inputs.arch == 'universal')
         working-directory: ${{ github.workspace }}
         run: |
           brew install automake texinfo

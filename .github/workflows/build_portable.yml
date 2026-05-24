@@ -27,7 +27,7 @@ permissions:
 
 concurrency:
   group: build-portable-${{ inputs.upstream_tag }}-${{ inputs.portable_revision || '1' }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   prepare:
@@ -59,10 +59,8 @@ jobs:
           - os: ubuntu-22.04
           - os: ubuntu-24.04
           - os: windows-latest
-          - os: macos-13
-            arch: x86_64
           - os: macos-14
-            arch: arm64
+            arch: universal
     uses: ./.github/workflows/build_check_cache.yml
     with:
       os: ${{ matrix.os }}
