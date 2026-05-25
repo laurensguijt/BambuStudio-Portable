@@ -57,6 +57,8 @@ Portable artifacts use `_Portable` in the filename:
 | macOS | `BambuStudio_Portable_Mac_universal_V02.07.00.55.zip` |
 | Linux | `BambuStudio_Portable_ubuntu-22.04_V02.07.00.55.AppImage` |
 
+Windows portable ZIPs contain `BambuStudio-Portable.exe` so Windows file associations and "Open with" entries are easy to distinguish from a normal Bambu Studio install.
+
 The version segment comes from `version.inc` in the synced `main` branch.
 
 ## Release notes

@@ -16,7 +16,7 @@ On startup, the app resolves the application directory and stores data in `porta
 
 ```text
 BambuStudioPortable/
-|-- bambu-studio.exe
+|-- BambuStudio-Portable.exe
 |-- BambuStudio.dll
 |-- resources/
 `-- portable_data/

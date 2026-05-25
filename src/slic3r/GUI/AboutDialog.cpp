@@ -260,6 +260,19 @@ AboutDialog::AboutDialog()
         version->SetForegroundColour(wxColour("#FFFFFD"));
         version->SetBackgroundColour(wxColour("#00AF42"));
         vesizer->Add(version, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, FromDIP(5));
+#ifdef SLIC3R_PORTABLE_BUILD
+        wxStaticText* portable_version = new wxStaticText(this, wxID_ANY, "Portable Edition", wxDefaultPosition, wxDefaultSize);
+        wxFont portable_font = GetFont();
+#ifdef __WXMSW__
+        portable_font.SetPointSize(portable_font.GetPointSize() - 1);
+#else
+        portable_font.SetPointSize(11);
+#endif
+        portable_version->SetFont(portable_font);
+        portable_version->SetForegroundColour(wxColour("#FFFFFE"));
+        portable_version->SetBackgroundColour(wxColour("#00AF42"));
+        vesizer->Add(portable_version, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, FromDIP(2));
+#endif
 #if BBL_INTERNAL_TESTING
         wxString plugin_version = wxString::Format("Plugin Version: %s", wxGetApp().getAgent() ? wxGetApp().getAgent()->get_version() : "");
         wxStaticText *plugin_version_text = new wxStaticText(this, wxID_ANY, plugin_version, wxDefaultPosition, wxDefaultSize);
@@ -281,6 +294,9 @@ AboutDialog::AboutDialog()
     text_sizer_horiz->Add( 0, 0, 0, wxLEFT, FromDIP(20));
 
     std::vector<wxString> text_list;
+#ifdef SLIC3R_PORTABLE_BUILD
+    text_list.push_back("Portable mode stores user data in the portable_data folder next to the application.");
+#endif
     text_list.push_back(_L("Bambu Studio is based on PrusaSlicer by PrusaResearch and SuperSlicer by Merill(supermerill)."));
     text_list.push_back(_L("PrusaSlicer is originally based on Slic3r by Alessandro Ranellucci."));
     text_list.push_back(_L("Slic3r was created by Alessandro Ranellucci with the help of many other contributors."));

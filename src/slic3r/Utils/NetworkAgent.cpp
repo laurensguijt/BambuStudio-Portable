@@ -170,10 +170,16 @@ std::string NetworkAgent::get_libpath_in_current_directory(std::string library_n
     std::string file_name_string(size_needed, 0);
     ::WideCharToMultiByte(0, 0, file_name, wcslen(file_name), file_name_string.data(), size_needed, nullptr, nullptr);
 
-    std::size_t found = file_name_string.find("bambu-studio.exe");
-    if (found == (file_name_string.size() - 16)) {
+    const std::string slicer_exe_name =
+#ifdef SLIC3R_PORTABLE_BUILD
+        "BambuStudio-Portable.exe";
+#else
+        "bambu-studio.exe";
+#endif
+    std::size_t found = file_name_string.rfind(slicer_exe_name);
+    if (found != std::string::npos && found + slicer_exe_name.size() == file_name_string.size()) {
         lib_path = library_name + ".dll";
-        lib_path = file_name_string.replace(found, 16, lib_path);
+        lib_path = file_name_string.replace(found, slicer_exe_name.size(), lib_path);
     }
 #else
 #endif

@@ -39,7 +39,11 @@ static void start_new_slicer_or_gcodeviewer(const NewSlicerInstanceType instance
 	wxString path;
 	wxFileName::SplitPath(wxStandardPaths::Get().GetExecutablePath(), &path, nullptr, nullptr, wxPATH_NATIVE);
 	path += "\\";
+#ifdef SLIC3R_PORTABLE_BUILD
+	path += (instance_type == NewSlicerInstanceType::Slicer) ? "BambuStudio-Portable.exe" : "bambu-gcodeviewer.exe";
+#else
 	path += (instance_type == NewSlicerInstanceType::Slicer) ? "bambu-studio.exe" : "bambu-gcodeviewer.exe";
+#endif
 	std::vector<const wchar_t*> args;
 	args.reserve(4);
 	args.emplace_back(path.wc_str());

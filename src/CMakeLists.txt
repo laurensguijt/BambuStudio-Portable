@@ -107,6 +107,12 @@ endif()
 
 # Create a slic3r executable
 # Process manifests for various platforms.
+set(SLIC3R_WINDOWS_OUTPUT_NAME "bambu-studio")
+set(SLIC3R_WINDOWS_EXECUTABLE_NAME "bambu-studio.exe")
+if (WIN32 AND SLIC3R_PORTABLE)
+    set(SLIC3R_WINDOWS_OUTPUT_NAME "BambuStudio-Portable")
+    set(SLIC3R_WINDOWS_EXECUTABLE_NAME "BambuStudio-Portable.exe")
+endif ()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/msw/BambuStudio.rc.in ${CMAKE_CURRENT_BINARY_DIR}/BambuStudio.rc @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/msw/BambuStudio.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/BambuStudio.manifest @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/osx/Info.plist.in ${CMAKE_CURRENT_BINARY_DIR}/Info.plist @ONLY)
@@ -177,7 +183,7 @@ if (WIN32)
     endif()
     target_compile_definitions(BambuStudio_app_gui PRIVATE -DSLIC3R_WRAPPER_NOCONSOLE)
     add_dependencies(BambuStudio_app_gui BambuStudio)
-    set_target_properties(BambuStudio_app_gui PROPERTIES OUTPUT_NAME "bambu-studio")
+    set_target_properties(BambuStudio_app_gui PROPERTIES OUTPUT_NAME "${SLIC3R_WINDOWS_OUTPUT_NAME}")
     target_link_libraries(BambuStudio_app_gui PRIVATE boost_headeronly)
 endif ()
 
