@@ -54,8 +54,17 @@ jobs:
         id: merge
         run: |
           set -e
-          if git merge upstream/master --no-edit; then
+          BASE_HEAD=$(git rev-parse HEAD)
+          if git merge upstream/master --no-commit --no-ff; then
             echo "conflict=false" >> "$GITHUB_OUTPUT"
+            # Keep this fork's workflow automation stable. Upstream workflow
+            # changes require elevated workflow permissions and can make the
+            # scheduled sync fail at push time.
+            git checkout "$BASE_HEAD" -- .github/workflows
+            git add .github/workflows
+            if [ -f .git/MERGE_HEAD ]; then
+              git commit -m "Merge upstream/master"
+            fi
           else
             echo "conflict=true" >> "$GITHUB_OUTPUT"
             git merge --abort || true
@@ -64,7 +73,13 @@ jobs:
 
       - name: Push main branch
         if: success()
-        run: git push origin main
+        run: |
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
+            echo "main is already up to date"
+          else
+            git push origin main
+          fi
 
       - name: Check whether a portable release is needed
         id: release_check
